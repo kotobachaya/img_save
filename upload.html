@@ -1,39 +1,9 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ことば茶屋 - 写真送信</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f9f9f9; color: #333; }
-        .upload-btn { 
-            background: #4caf50; color: white; padding: 25px; width: 80%;
-            font-size: 1.4rem; border: none; border-radius: 15px; cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .upload-btn:disabled { background: #ccc; }
-        #status { margin-top: 20px; font-weight: bold; min-height: 1.5em; }
-        #preview { max-width: 100%; margin-top: 20px; display: none; border-radius: 10px; border: 1px solid #ddd; }
-    </style>
-</head>
-<body>
-    <h2>リハビリ写真送信</h2>
-    <p>撮影した画像をスタッフの画面へ送信します</p>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none">
-    
-    <button class="upload-btn" id="start-btn">写真を撮って送る</button>
-
-    <div id="status"></div>
-    <img id="preview" alt="プレビュー画像">
-
-    <script type="module">
-        // Firebaseの各機能を読み込み
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-        // ★★★ ここにご自身のFirebase Configを貼り付けてください ★★★
-        const firebaseConfig = {
+    // ★★★ あなたのConfigをここに貼り付け ★★★
+   const firebaseConfig = {
   apiKey: "AIzaSyBUmuz4VZ1VORz9acsGrRkyB6OL1ZT-xQc",
   authDomain: "kotobachaya-app.firebaseapp.com",
   projectId: "kotobachaya-app",
@@ -42,62 +12,55 @@
   appId: "1:838680003830:web:bfd11dd1a36859671218d7"
 };
 
-        // Firebaseの初期化
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        const startBtn = document.getElementById('start-btn');
-        const cameraInput = document.getElementById('camera-input');
-        const status = document.getElementById('status');
-        const preview = document.getElementById('preview');
+    const startBtn = document.getElementById('start-btn');
+    const cameraInput = document.getElementById('camera-input');
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
 
-        // ボタンが押されたらファイル選択（カメラ）を起動
-        startBtn.onclick = () => cameraInput.click();
+    startBtn.onclick = () => cameraInput.click();
 
-        cameraInput.onchange = async (e) => {
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
-            const file = files;
+    cameraInput.onchange = async (e) => {
+        // 【修正ポイント】ファイルが確実に存在するかチェック
+        if (!e.target.files || e.target.files.length === 0) {
+            return; 
+        }
+        
+        const file = e.target.files; // ここで1枚目の画像を取得
+        status.innerText = '1. 画像を読み込み中...';
+        startBtn.disabled = true;
 
-            status.innerText = '1. 画像を読み込み中...';
-            startBtn.disabled = true;
-
-            const reader = new FileReader();
-            
-            // ファイルの読み込みが完了した時の処理
-            reader.onload = async (event) => {
-                try {
-                    status.innerText = '2. 送信を開始します...';
-                    
-                    // プレビュー表示
-                    const base64Data = event.target.result;
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            try {
+                status.innerText = '2. 送信を開始します...';
+                const base64Data = event.target.result;
+                
+                // プレビュー表示
+                if(preview) {
                     preview.src = base64Data;
                     preview.style.display = 'block';
-
-                    // Firestoreの "photos" コレクションへ直接保存
-                    await addDoc(collection(db, "photos"), {
-                        imageData: base64Data, // ここに画像データが入ります
-                        createdAt: serverTimestamp(),
-                        type: "rehab-image"
-                    });
-
-                    status.innerText = '✅ 送信完了しました！';
-                    startBtn.disabled = false;
-                } catch (err) {
-                    console.error("送信エラー:", err);
-                    status.innerText = '❌ 送信失敗: ' + err.message;
-                    startBtn.disabled = false;
                 }
-            };
 
-            reader.onerror = () => {
-                status.innerText = '❌ ファイルの読み込みに失敗しました';
+                // Firestoreへ送信
+                await addDoc(collection(db, "photos"), {
+                    imageData: base64Data,
+                    createdAt: serverTimestamp()
+                });
+
+                status.innerText = '✅ 送信完了しました！';
                 startBtn.disabled = false;
-            };
-
-            // 画像を読み込み開始
-            reader.readAsDataURL(file);
+            } catch (err) {
+                console.error("送信エラー:", err);
+                status.innerText = '❌ エラー: ' + err.message;
+                startBtn.disabled = false;
+            }
         };
-    </script>
-</body>
-</html>
+
+        // 【重要】ここで確実に「file」を読み込ませる
+        reader.readAsDataURL(file);
+    };
+</script>
