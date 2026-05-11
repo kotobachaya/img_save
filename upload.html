@@ -1,9 +1,38 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ことば茶屋 - 写真送信</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f9f9f9; color: #333; }
+        .upload-btn { 
+            background: #4caf50; color: white; padding: 25px; width: 80%;
+            font-size: 1.4rem; border: none; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .upload-btn:disabled { background: #ccc; }
+        #status { margin-top: 20px; font-weight: bold; min-height: 1.5em; }
+        #preview { max-width: 100%; margin-top: 20px; display: none; border-radius: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h2>リハビリ写真送信</h2>
+    <p>撮影した画像をスタッフの画面へ送信します</p>
+
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none">
+    
+    <button class="upload-btn" id="start-btn">写真を撮って送る</button>
+
+    <div id="status"></div>
+    <img id="preview" alt="プレビュー画像">
+
+   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     // ★★★ あなたのConfigをここに貼り付け ★★★
-   const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyBUmuz4VZ1VORz9acsGrRkyB6OL1ZT-xQc",
   authDomain: "kotobachaya-app.firebaseapp.com",
   projectId: "kotobachaya-app",
@@ -64,3 +93,6 @@
         reader.readAsDataURL(file);
     };
 </script>
+    </script>
+</body>
+</html>
